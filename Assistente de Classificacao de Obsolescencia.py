@@ -131,7 +131,6 @@ TABELA_FINAL = {
         "texto": "Edificação cujo estado geral possa ser recuperado com estabilização e/ou recuperação do sistema estrutural, substituição da regularização da alvenaria, reparos de fissuras. Substituição das instalações hidráulicas e elétricas. Substituição dos revestimentos de pisos e paredes. Substituição da impermeabilização ou do telhado. "}
 }
 
-# Lista de analistas em ordem alfabética
 ANALISTAS = [
     "Bruno Armoa",
     "Gisele Almeida",
@@ -157,7 +156,6 @@ st.set_page_config(page_title="Classificador de Obsolescência", page_icon="🏢
 MENSAGEM_PADRAO = "Selecione a classificação"
 MENSAGEM_ANALISTA = "Selecione o Analista..."
 
-# Função de reset forte: Força explicitamente todos os campos a voltarem ao padrão
 def limpar_dados():
     st.session_state["inscricao"] = ""
     st.session_state["analista"] = MENSAGEM_ANALISTA
@@ -188,13 +186,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# CABEÇALHO COM AS LOGOS
+# CABEÇALHO — apenas a logo da Secretaria, centralizada
 # ==========================================
-st.write("") 
+st.write("")
 
-col_logo2, espaco_dir = st.columns([2.5, 1, 1, 2.5], vertical_alignment="center")
+# Três colunas: as laterais ficam vazias e servem como espaçadores,
+# a coluna central recebe a logo para ficará centralizada na página.
+col_esq, col_centro, col_dir = st.columns([1, 2, 1])
 
-with col_logo2:
+with col_centro:
     st.image("logo_secretaria.png", use_container_width=True)
 
 st.markdown("<h2 style='text-align: center;'>Assistente de Classificação do Fator de Obsolescência do Imóvel</h2>", unsafe_allow_html=True)
@@ -207,7 +207,6 @@ st.divider()
 # ==========================================
 st.markdown("### 📋 Identificação do Imóvel e Analista")
 
-# Agora usando 3 colunas para acomodar o novo campo
 col_cad1, col_cad2, col_cad3 = st.columns(3)
 
 with col_cad1:
@@ -247,7 +246,7 @@ for i, elemento in enumerate(elementos):
         if escolha != MENSAGEM_PADRAO:
             st.markdown(f'<style>div[data-testid="stSelectbox"]:has(div[id*="sel_{elemento}"]) {{ background-color: rgba(34, 197, 94, 0.15); border-radius: 0.5rem; }}</style>', unsafe_allow_html=True)
             
-        st.write("") 
+        st.write("")
 
 st.divider()
 
@@ -269,7 +268,6 @@ with col_btn2:
 if btn_calcular:
     itens_pendentes = [item for item, desc in selecoes.items() if desc == MENSAGEM_PADRAO]
     
-    # Validações de Segurança atualizadas
     if not inscricao.strip():
         st.error("⚠️ Atenção! Você esqueceu de preencher a Inscrição Cadastral.")
         st.session_state["mostrar_resultados"] = False
@@ -285,7 +283,6 @@ if btn_calcular:
     else:
         st.session_state["mostrar_resultados"] = True
 
-# Se tudo estiver correto, exibe os resultados e gera o PDF
 if st.session_state["mostrar_resultados"]:
     soma_pesos = 0
     soma_contribuicoes = 0
@@ -323,7 +320,7 @@ if st.session_state["mostrar_resultados"]:
     """, unsafe_allow_html=True)
 
     # ==========================================
-    # GERADOR DE RELATÓRIO PDF (OTIMIZADO PARA 1 PÁGINA)
+    # GERADOR DE RELATÓRIO PDF
     # ==========================================
     def gerar_pdf_bytes():
         pdf = FPDF(orientation="P", unit="mm", format="A4")
@@ -333,27 +330,29 @@ if st.session_state["mostrar_resultados"]:
         def limpa_txt(texto):
             return str(texto).encode('latin-1', 'replace').decode('latin-1')
 
-        # Inserindo as Logos Centralizadas
-       
+        # Logo da Secretaria centralizada no PDF
+        # A largura útil do A4 com margens de 15mm em cada lado é 180mm.
+        # Uma logo de 50mm de largura fica centrada em x = (210 - 50) / 2 = 80mm.
         try:
-            pdf.image("logo_secretaria.png", x=110, y=10, w=35)
-        except: pass
+            pdf.image("logo_secretaria.png", x=80, y=10, w=50)
+        except:
+            pass
 
-        pdf.set_y(28) 
+        pdf.set_y(30)
 
         # Título
         pdf.set_font("Arial", "B", 14)
         pdf.cell(0, 8, limpa_txt("Relatório de Classificação - Fator de Obsolescência"), ln=1, align="C")
         pdf.ln(4)
 
-        # Dados Básicos (Inscrição, Analista e Data)
+        # Dados Básicos
         pdf.set_font("Arial", "B", 11)
         pdf.cell(0, 6, limpa_txt(f"Inscrição Cadastral: {inscricao}"), ln=1)
         pdf.cell(0, 6, limpa_txt(f"Analista Responsável: {analista}"), ln=1)
         pdf.cell(0, 6, limpa_txt(f"Data da Análise: {data_analise.strftime('%d/%m/%Y')}"), ln=1)
         pdf.ln(3)
 
-        # Opções Estruturais Selecionadas
+        # Itens Estruturais
         pdf.set_fill_color(240, 240, 240)
         pdf.cell(0, 7, limpa_txt("Itens Estruturais Avaliados:"), fill=True, ln=1)
         pdf.ln(2)
@@ -375,7 +374,7 @@ if st.session_state["mostrar_resultados"]:
         pdf.cell(0, 5, limpa_txt(f"Soma Contribuições: {soma_contribuicoes}"), ln=1)
         pdf.cell(0, 5, limpa_txt(f"Nota Final (Média): {nota_final:.2f}"), ln=1)
 
-        # Caixa do Resultado Final (Verde)
+        # Resultado Final
         pdf.ln(3)
         pdf.set_fill_color(230, 245, 230)
         pdf.set_font("Arial", "B", 12)
